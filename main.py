@@ -10,12 +10,14 @@ import time
 import os
 import requests
 import logging
+from google.cloud import storage
 
 from ring_doorbell import Ring, Auth
 from oauthlib.oauth2 import MissingTokenError
 
 logging.basicConfig(level=logging.INFO)
 
+CONFIG = json.loads(open('config.json', 'r').read())
 
 def initialize_ring():
     cache_file = Path("token.cache")
@@ -50,6 +52,28 @@ def download_file(url, local_filename):
                 f.write(chunk)
                 #f.flush() commented by recommendation from J.F.Sebastian
     return local_filename
+
+
+def convert_to_giphy(movie_file, snapshot_file):
+    cmdline = "ffmpeg -t 3 -i %s -vf 'fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse' -loop 0 %s" % (movie_file, snapshot_file)
+    os.system(cmdline)
+
+
+def upload_to_gcs(snapshot_file):
+    client = storage.Client.from_service_account_json(json_credentials_path='gcs-credentials.json')
+    # Creating bucket object
+    bucket = client.get_bucket(CONFIG['gcs_bucket'])
+    # Name of the object to be stored in the bucket
+    blob = bucket.blob(CONFIG['gcs_bucket_prefix'] + os.path.basename(snapshot_file))
+    # Name of the object in local file system
+    blob.upload_from_filename(snapshot_file)
+    return blob.public_url
+
+
+def send_image_event(image):
+    url = 'https://bsqd.me/api/bot/%s/user/web_pwa+xxxx/event/doorbell' % CONFIG['bot_id']
+    r = requests.post(url, json={"image": image}, headers={'Authorization': 'Bearer ' + CONFIG['api_key']})
+    print(r)
 
 
 def main():
@@ -87,20 +111,28 @@ def main():
         try:
             logging.info("Getting recording URL...")
             url = device.recording_url(event['id'])
+
             logging.info("Downloading...")
             download_file(url, movie_file)
 
-            cmdline = "ffmpeg -t 3 -i %s -vf 'fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse' -loop 0 %s" % (movie_file, snapshot_file)
             logging.info("Converting...")
-            os.system(cmdline)
+            convert_to_giphy(movie_file, snapshot_file)
+
+            logging.info("Uploading to GCS...")
+            url = upload_to_gcs(snapshot_file)
+            logging.info(url)
+
+            logging.info("Notfying chat sessions...")
+            send_image_event(url)
+
+
         except Exception as e:
             logging.error(e)
             continue
 
-        logging.info("Created: " + snapshot_file)
+        logging.info("Done!")
         last_event = event
 
-        # break
 
 if __name__ == "__main__":
     main()

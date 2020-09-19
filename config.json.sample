@@ -1,0 +1,6 @@
+{
+  "gcs_bucket": "bucket-name",
+  "gcs_bucket_prefix": "some-prefix/",
+  "bot_id": "ea09f8ea-098a0-8fe0a8ea0-98f09a8",
+  "api_key": "fldsjafoiadsjfoirewjforew"
+}

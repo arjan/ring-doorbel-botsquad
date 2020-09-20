@@ -90,8 +90,13 @@ def main():
         event = None
         time.sleep(2)
 
-        for event in device.history(limit=10, kind='ding'):
-            break
+        try:
+            for event in device.history(limit=10, kind='ding'):
+                break
+        except Exception as e:
+            logging.error(e)
+            continue
+
         if not event or (type(last_event) == dict and event['id'] != last_event['id']):
             logging.debug("No events found...")
             continue

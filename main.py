@@ -89,15 +89,17 @@ def main():
         now = datetime.now(timezone.utc)
         event = None
         time.sleep(2)
+        print(". %s" % now)
 
         try:
             for event in device.history(limit=10, kind='ding'):
                 break
         except Exception as e:
             logging.error(e)
+            time.sleep(30)
             continue
 
-        if not event or (type(last_event) == dict and event['id'] != last_event['id']):
+        if not event or (type(last_event) == dict and event['id'] == last_event['id']):
             logging.debug("No events found...")
             continue
 

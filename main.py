@@ -78,6 +78,10 @@ def send_image_event(image):
     r = requests.post(url, json={"image": image}, headers={'Authorization': 'Bearer ' + CONFIG['api_key']})
     print(r)
 
+    url = 'https://bsqd.me/api/bot/%s/user/master/event/doorbell' % CONFIG['bot_id']
+    r = requests.post(url, json={"image": image}, headers={'Authorization': 'Bearer ' + CONFIG['api_key']})
+    print(r)
+
 
 def main():
     """ Poll the ring device and check for the last ding """

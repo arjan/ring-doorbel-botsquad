@@ -95,7 +95,6 @@ def main():
         now = datetime.now(timezone.utc)
         event = None
         time.sleep(2)
-        print(". %s" % now)
 
         try:
             for event in device.history(limit=10, kind='ding'):

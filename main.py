@@ -80,6 +80,7 @@ def main():
     """ Poll the ring device and check for the last ding """
     ring = initialize_ring()
     devices = ring.devices()
+    logging.info(str(devices))
     device = devices['doorbots'][0]
     logging.info("Using RING device: " + str(device))
 

@@ -17,7 +17,10 @@ from oauthlib.oauth2 import MissingTokenError
 
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = json.loads(open('config.json', 'r').read())
+import sys
+config_file = sys.argv[1]
+
+CONFIG = json.loads(open(config_file, 'r').read())
 
 def initialize_ring():
     cache_file = Path("token.cache")
@@ -81,7 +84,9 @@ def main():
     ring = initialize_ring()
     devices = ring.devices()
     logging.info(str(devices))
-    device = devices['doorbots'][0]
+    device = [d for d in devices['doorbots'] if d.name == CONFIG['device_name']][0]
+
+    logging.info("Using config file: " + str(sys.argv[1]))
     logging.info("Using RING device: " + str(device))
 
     last_event = None
